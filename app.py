@@ -212,10 +212,16 @@ with tab2:
                 input_row[feat] = st.slider(feat, lo, hi, default)
 
         input_df = pd.DataFrame([input_row])[X.columns]
-        pred_proba = model.predict_proba(input_df)[0, 1]
-        pred_class = le.inverse_transform([int(pred_proba >= 0.5)])[0]
+        pred_proba = float(model.predict_proba(input_df)[0, 1])
+        raw_class = le.inverse_transform([int(pred_proba >= 0.5)])[0]
 
-        st.metric("Predicted class", pred_class)
+        # OpenML's qsar-biodeg target sometimes comes through as raw codes
+        # rather than descriptive text; map to a readable label either way.
+        friendly_labels = {"1": "Not-ready biodegradable (NRB)", "2": "Ready biodegradable (RB)",
+                            "RB": "Ready biodegradable (RB)", "NRB": "Not-ready biodegradable (NRB)"}
+        pred_label = friendly_labels.get(str(raw_class), str(raw_class))
+
+        st.metric("Predicted class", pred_label)
         st.progress(min(max(pred_proba, 0.0), 1.0), text=f"P(ready biodegradable) = {pred_proba:.3f}")
 
         with st.expander("Feature importance (top 10)"):
@@ -271,3 +277,8 @@ performance against a tuned XGBoost baseline.
         "analysis are described in the accompanying dissertation report "
         "and Jupyter notebook in this repository."
     )
+  
+  
+
+
+    
